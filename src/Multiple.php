@@ -2,7 +2,7 @@
 
 namespace Easyconn\PhalconLogger;
 
-use Phalcon\Logger;
+use Phalcon\Logger\Logger;
 
 class Multiple extends Logger\Multiple
 {

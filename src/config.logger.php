@@ -35,9 +35,9 @@ return [
 
         // The log levels which are forwarded to sentry.
         'levels' => [
-            \Phalcon\Logger::EMERGENCY,
-            \Phalcon\Logger::CRITICAL,
-            \Phalcon\Logger::ERROR,
+            \Phalcon\Logger\Logger::EMERGENCY,
+            \Phalcon\Logger\Logger::CRITICAL,
+            \Phalcon\Logger\Logger::ERROR,
         ],
 
         // These exceptions are not reported to sentry.
@@ -65,8 +65,8 @@ return [
 
         // The log levels which are forwarded to slack.
         'levels' => [
-            \Phalcon\Logger::SPECIAL,
-            \Phalcon\Logger::CUSTOM,
+            \Phalcon\Logger\Logger::SPECIAL,
+            \Phalcon\Logger\Logger::CUSTOM,
         ],
 
         // The default context. Can be overridden with context parameter on each call to log:
@@ -80,13 +80,13 @@ return [
 
         // Color map for attachments.
         'colors' => [
-            \Phalcon\Logger::EMERGENCE => 'danger',
-            \Phalcon\Logger::CRITICAL  => 'danger',
-            \Phalcon\Logger::ERROR     => 'danger',
-            \Phalcon\Logger::ALERT     => 'good',
-            \Phalcon\Logger::INFO      => 'good',
-            \Phalcon\Logger::NOTICE    => 'warning',
-            \Phalcon\Logger::WARNING   => 'warning',
+            \Phalcon\Logger\Logger::EMERGENCE => 'danger',
+            \Phalcon\Logger\Logger::CRITICAL  => 'danger',
+            \Phalcon\Logger\Logger::ERROR     => 'danger',
+            \Phalcon\Logger\Logger::ALERT     => 'good',
+            \Phalcon\Logger\Logger::INFO      => 'good',
+            \Phalcon\Logger\Logger::NOTICE    => 'warning',
+            \Phalcon\Logger\Logger::WARNING   => 'warning',
         ],
     ],
 ];

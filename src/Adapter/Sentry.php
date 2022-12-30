@@ -3,19 +3,21 @@
 namespace Easyconn\PhalconLogger\Adapter;
 
 use Easyconn\PhalconLogger\Formatter;
-use Phalcon\Config;
-use Phalcon\Logger;
+use Phalcon\Config\Config;
+use Phalcon\Logger\Logger;
+use Phalcon\Logger\Adapter\AbstractAdapter as LoggerAbstractAdapter;
+use Phalcon\Logger\Item;
 use Sentry\State\Scope as SentryScope;
 use Sentry\Severity;
 
 /**
  * The Sentry logger adapter for phalcon.
  */
-class Sentry extends Logger\Adapter
+class Sentry extends LoggerAbstractAdapter
 {
     // The map of Phalcon log levels to Sentry log levels. Throughout the application, we use only Phalcon levels.
     const LOG_LEVELS = [
-        Logger::EMERGENCE => Severity::FATAL,
+        Logger::EMERGENCY => Severity::FATAL,
         Logger::CRITICAL  => Severity::FATAL,
         Logger::ALERT     => Severity::INFO,
         Logger::ERROR     => Severity::ERROR,
@@ -23,8 +25,7 @@ class Sentry extends Logger\Adapter
         Logger::NOTICE    => Severity::DEBUG,
         Logger::INFO      => Severity::INFO,
         Logger::DEBUG     => Severity::DEBUG,
-        Logger::CUSTOM    => Severity::INFO,
-        Logger::SPECIAL   => Severity::INFO,
+        Logger::CUSTOM    => Severity::INFO
     ];
 
     /** @var \Raven_Client */
@@ -84,12 +85,11 @@ class Sentry extends Logger\Adapter
      *
      * @param string|int $message
      * @param string|int $type
-     * @param int        $time
      * @param array      $context
      *
      * @return void
      */
-    public function logInternal($message, $type, int $time, array $context = [])
+    public function logInternal($message, $type, array $context = [])
     {
         $message = $this->getFormatter()->interpolate($message, $context);
 
@@ -114,6 +114,16 @@ class Sentry extends Logger\Adapter
         }
 
         $this->send($exception, $type, $context);
+    }
+
+    public function process(Item $item): void
+    {
+        foreach ($this->config->sentry->dontReport as $ignore) {
+            if ($exception instanceof $ignore) {
+                return;
+            }
+        }
+        $this->send($item->message, $item->type, $item->context);
     }
 
     /**
@@ -240,20 +250,24 @@ class Sentry extends Logger\Adapter
     /**
      * @inheritdoc
      */
-    public function getFormatter()
+    public function getFormatter1()
     {
-        if (empty($this->_formatter)) {
-            $this->_formatter = new Formatter;
+        if (empty($this->formatter)) {
+            $this->formatter = new Formatter;
         }
 
-        return $this->_formatter;
+        return $this->formatter;
     }
 
     /**
      * @inheritdoc
      */
-    public function close()
+    public function close(?int $timeout = null): bool
     {
+        if ($this->client) {
+            $this->client->flush($timeout);
+        }
+        return true;
     }
 
     /**
@@ -271,7 +285,7 @@ class Sentry extends Logger\Adapter
         if (isset($this->config->sentry->dsn)) {
             $options = ['dsn' => $this->config->sentry->dsn, 'environment' => $this->config->environment] + $this->config->sentry->options->toArray();
 
-            $this->setClient((new \Sentry\ClientBuilder( new \Sentry\Options($options)))->getClient());
+            $this->setClient((new \Sentry\ClientBuilder(new \Sentry\Options($options)))->getClient());
         }
     }
 
@@ -303,7 +317,7 @@ class Sentry extends Logger\Adapter
             $this->client->tags_context(['request' => $this->requestId]);
         }
 
-        // 
+        //
         $scope = null;
         if (is_array($context['extra'] ?? null)) {
             \Sentry\configureScope(function (SentryScope $mainScope) use (&$scope) {
@@ -315,9 +329,9 @@ class Sentry extends Logger\Adapter
             }
         }
 
-        $this->lastEventId = $loggable instanceof \Throwable
+        $this->lastEventId = ($loggable instanceof \Throwable && $loggable->getTrace() != null)
             ? $this->client->captureException($loggable, $scope)
-            : $this->client->captureMessage($loggable, [], $scope);
+            : $this->client->captureMessage($loggable, new Severity(static::toSentryLogLevel($type)), $scope);
     }
 
     /**
