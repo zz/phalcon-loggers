@@ -2,15 +2,18 @@
 
 namespace Easyconn\PhalconLogger;
 
-use Phalcon\Logger;
+use Phalcon\Logger\Formatter\Line as PhalconLoggerFormatter;
+use Phalcon\Logger\Item;
+use Phalcon\Support\HelperFactory;
 
-class Formatter extends Logger\Formatter
+class Formatter extends PhalconLoggerFormatter
 {
     /**
      * @inheritdoc
      */
-    public function format($message, $type, $timestamp, $context = null)
+    public function format(Item $item): string
     {
-        return $this->interpolate($message, $context ?: []);
+        $helper = new HelperFactory();
+        return $helper->interpolate($item->getMessage(), $item->getContext() ?: []);
     }
 }
