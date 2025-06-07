@@ -108,7 +108,7 @@ class Sentry extends LoggerAbstractAdapter
      *
      * @return void
      */
-    public function logException(\Throwable $exception, array $context = [], int $type = null)
+    public function logException(\Throwable $exception, array $context = [], ?int $type = null)
     {
         foreach ($this->config->sentry->dontReport as $ignore) {
             if ($exception instanceof $ignore) {
@@ -121,9 +121,12 @@ class Sentry extends LoggerAbstractAdapter
 
     public function process(Item $item): void
     {
-        foreach ($this->config->sentry->dontReport as $ignore) {
-            if ($exception instanceof $ignore) {
-                return;
+        // Check if the message is an exception that should be ignored
+        if ($item->message instanceof \Throwable) {
+            foreach ($this->config->sentry->dontReport as $ignore) {
+                if ($item->message instanceof $ignore) {
+                    return;
+                }
             }
         }
         $this->send($item->message, $item->type, $item->context);
@@ -188,7 +191,7 @@ class Sentry extends LoggerAbstractAdapter
      *
      * @return \CrazyFactory\PhalconLogger\Adapter\Sentry
      */
-    public function addCrumb(string $message, string $category = 'default', array $data = [], int $type = null): Sentry
+    public function addCrumb(string $message, string $category = 'default', array $data = [], ?int $type = null): Sentry
     {
         if ($this->client) {
             $level = static::toSentryLogLevel($type ?? Logger::INFO);
@@ -328,7 +331,9 @@ class Sentry extends LoggerAbstractAdapter
             });
 
             foreach ($context['extra'] as $key => $value) {
-                $scope->setExtra($key, $value);
+                if ($scope !== null) {
+                    $scope->setExtra($key, $value);
+                }
             }
         }
 
