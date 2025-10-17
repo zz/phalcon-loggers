@@ -187,7 +187,7 @@ class Sentry extends LoggerAbstractAdapter
      * @param string $message
      * @param string $category
      * @param array  $data
-     * @param int    $type
+     * @param int|null $type
      *
      * @return \CrazyFactory\PhalconLogger\Adapter\Sentry
      */

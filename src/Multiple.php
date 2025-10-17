@@ -13,7 +13,7 @@ class Multiple extends Logger\Multiple
      *
      * @return void
      */
-    public function logException(\Throwable $exception, array $context = [], int $type = null)
+    public function logException(\Throwable $exception, array $context = [], ?int $type = null)
     {
         $type = $type ?? Logger::ERROR;
 

@@ -184,7 +184,7 @@ Sentry logger has following public APIs:
     $di->getShared('sentry')->getLastEventId();
 ```
 
-- **logException(\Throwable $exception, array $context = [], int $type = null)**
+- **logException(\Throwable $exception, array $context = [], ?int $type = null)**
 ```php
     try {
         $app->handle();
