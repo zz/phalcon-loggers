@@ -312,25 +312,31 @@ class Sentry extends LoggerAbstractAdapter
 
         $context += ['level' => static::toSentryLogLevel($type)];
 
-        // Wipe out extraneous keys. Issue #3.
-        $context = array_intersect_key($context, array_flip([
-            'context', 'extra', 'fingerprint', 'level',
-            'logger', 'release', 'tags',
-        ]));
+        // Reserved Sentry context keys
+        $sentryKeys = ['context', 'extra', 'fingerprint', 'level', 'logger', 'release', 'tags'];
+
+        // Separate Sentry-specific keys from custom context data
+        $sentryContext = array_intersect_key($context, array_flip($sentryKeys));
+        $customContext = array_diff_key($context, array_flip($sentryKeys));
+
+        // If there's custom context data, add it to the 'extra' key
+        if (!empty($customContext)) {
+            $sentryContext['extra'] = array_merge($sentryContext['extra'] ?? [], $customContext);
+        }
 
         // Tag current request ID for search/trace.
         if ($this->requestId) {
             $this->client->tags_context(['request' => $this->requestId]);
         }
 
-        //
+        // Configure scope with extra data
         $scope = null;
-        if (is_array($context['extra'] ?? null)) {
+        if (is_array($sentryContext['extra'] ?? null)) {
             \Sentry\configureScope(function (SentryScope $mainScope) use (&$scope) {
                 $scope = clone $mainScope;
             });
 
-            foreach ($context['extra'] as $key => $value) {
+            foreach ($sentryContext['extra'] as $key => $value) {
                 if ($scope !== null) {
                     $scope->setExtra($key, $value);
                 }
